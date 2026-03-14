@@ -1,0 +1,249 @@
+// Состояние приложения
+let currentScreen = 'welcome';
+let telegramId = localStorage.getItem('telegram_id') || 'user_' + Math.random().toString(36).substring(2);
+let installed = localStorage.getItem('installed') === 'true';
+let installStartTime = localStorage.getItem('installStart');
+let installDuration = localStorage.getItem('installDuration');
+let cooldown = false;
+
+// Сохраняем telegram_id
+localStorage.setItem('telegram_id', telegramId);
+
+// Элементы
+const app = document.getElementById('app');
+
+// Функция для показа уведомления
+function showNotification(message) {
+    const notif = document.createElement('div');
+    notif.className = 'cooldown-notification';
+    notif.textContent = message;
+    document.body.appendChild(notif);
+    setTimeout(() => notif.remove(), 3000);
+}
+
+// Функция рендера
+function render() {
+    switch(currentScreen) {
+        case 'welcome':
+            renderWelcome();
+            break;
+        case 'key':
+            renderKey();
+            break;
+        case 'main':
+            renderMain();
+            break;
+        case 'install':
+            renderInstall();
+            break;
+        case 'success':
+            renderSuccess();
+            break;
+        case 'injected':
+            renderInjected();
+            break;
+        case 'update':
+            renderUpdate();
+            break;
+    }
+}
+
+function renderWelcome() {
+    app.innerHTML = `
+        <div class="screen welcome-screen">
+            <h1 class="welcome-title">Добро пожаловать, хацкер</h1>
+            <button class="welcome-btn" onclick="goToScreen('key')">Продолжить</button>
+        </div>
+    `;
+}
+
+function renderKey() {
+    app.innerHTML = `
+        <div class="screen key-screen">
+            <h2 class="key-title">Ключ система</h2>
+            <input type="text" class="key-input" id="keyInput" placeholder="Введите ключ">
+            <div class="key-error" id="keyError"></div>
+            <div class="key-success" id="keySuccess"></div>
+            <button class="key-btn" onclick="submitKey()">Продолжить</button>
+            <button class="back-btn" onclick="goToScreen('welcome')">Назад</button>
+        </div>
+    `;
+}
+
+async function submitKey() {
+    const key = document.getElementById('keyInput').value.trim();
+    if (!key) return;
+
+    const errorEl = document.getElementById('keyError');
+    const successEl = document.getElementById('keySuccess');
+    
+    try {
+        const res = await fetch('/api/verify-key', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key, telegram_id: telegramId })
+        });
+        
+        const data = await res.json();
+        
+        if (data.valid) {
+            successEl.textContent = 'Успешно!';
+            setTimeout(() => goToScreen('main'), 1000);
+        } else {
+            errorEl.textContent = data.message || 'Неверный ключ!';
+        }
+    } catch (err) {
+        errorEl.textContent = 'Ошибка соединения';
+    }
+}
+
+function renderMain() {
+    app.innerHTML = `
+        <div class="screen main-screen">
+            <h1 class="main-title">Zenin<span>.cc</span></h1>
+            <div class="main-buttons">
+                <button class="main-btn" onclick="startGame()">Start Game</button>
+                <button class="main-btn" onclick="goToScreen('update')">Update Logs</button>
+            </div>
+        </div>
+    `;
+}
+
+async function startGame() {
+    if (cooldown) {
+        showNotification('Подождите 30 секунд');
+        return;
+    }
+
+    if (installed) {
+        goToScreen('injected');
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/install-modules', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ telegram_id: telegramId })
+        });
+        
+        const data = await res.json();
+        
+        if (res.status === 429) {
+            showNotification('Подождите 30 секунд');
+            cooldown = true;
+            setTimeout(() => cooldown = false, 30000);
+            return;
+        }
+        
+        if (data.success) {
+            localStorage.setItem('installStart', Date.now());
+            localStorage.setItem('installDuration', data.installTime);
+            goToScreen('install');
+        }
+    } catch (err) {
+        showNotification('Ошибка запуска');
+    }
+}
+
+function renderInstall() {
+    const start = parseInt(localStorage.getItem('installStart'));
+    const duration = parseInt(localStorage.getItem('installDuration'));
+    const elapsed = Date.now() - start;
+    const progress = Math.min(100, Math.floor((elapsed / duration) * 100));
+    const remaining = Math.max(0, Math.floor((duration - elapsed) / 1000));
+
+    if (progress >= 100) {
+        installed = true;
+        localStorage.setItem('installed', 'true');
+        goToScreen('success');
+        return;
+    }
+
+    app.innerHTML = `
+        <div class="screen install-screen">
+            <h2 class="install-title">Установка модулей</h2>
+            <div class="install-note">бета тест v1.0.0 не судите строго</div>
+            <div class="install-progress-container">
+                <div class="install-progress-bar">
+                    <div class="install-progress-fill" style="width: ${progress}%"></div>
+                </div>
+                <div class="install-progress-text">${progress}%</div>
+                <div class="install-time">Осталось: ${remaining} сек</div>
+            </div>
+        </div>
+    `;
+
+    if (progress < 100) {
+        setTimeout(renderInstall, 1000);
+    }
+}
+
+function renderSuccess() {
+    app.innerHTML = `
+        <div class="screen success-screen">
+            <div class="success-icon">✓</div>
+            <div class="success-message">Модули установлены, чит готов к работе</div>
+            <button class="back-btn" onclick="goToScreen('main')">Back to menu</button>
+        </div>
+    `;
+}
+
+function renderInjected() {
+    app.innerHTML = `
+        <div class="screen success-screen">
+            <div class="success-icon">⚡</div>
+            <div class="success-message">Инжектировано в игру!</div>
+            <div class="success-note">Внимание! Чит без меню, в нем только чамсы, не судите строго</div>
+            <button class="back-btn" onclick="goToScreen('main')">Back to menu</button>
+        </div>
+    `;
+}
+
+function renderUpdate() {
+    app.innerHTML = `
+        <div class="screen update-screen">
+            <h2 class="logs-title">Beta Test 1.0.0</h2>
+            <div class="logs-subtitle">Что добавили/изменили?</div>
+            <div class="logs-list">
+                <p class="add">+ меню</p>
+                <p class="add">+ установка модулей</p>
+                <p class="add">+ чит</p>
+                <p class="add">+ ключ система</p>
+                <p class="remove">- баги</p>
+            </div>
+            <button class="back-btn" onclick="goToScreen('main')">Back to menu</button>
+        </div>
+    `;
+}
+
+// Функция перехода между экранами
+function goToScreen(screen) {
+    currentScreen = screen;
+    render();
+}
+
+// Запуск
+window.goToScreen = goToScreen;
+window.submitKey = submitKey;
+window.startGame = startGame;
+
+// Проверка статуса при загрузке
+(async function() {
+    try {
+        const res = await fetch(`/api/check-installed?telegram_id=${telegramId}`);
+        const data = await res.json();
+        if (data.installed) {
+            installed = true;
+            localStorage.setItem('installed', 'true');
+        }
+    } catch (err) {
+        console.log('Status check failed');
+    }
+    
+    // Если ключ активирован, идём в главное меню
+    if (localStorage.getItem('key_activated')) {
+        currentScreen = 'main';
+    }
+    render();
+})();
