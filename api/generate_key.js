@@ -1,63 +1,43 @@
 import { keys, userKeys } from '../lib/store.js';
 
-// Секретный ключ для проверки бота (только ты знаешь)
-const BOT_SECRET = "FraZzerNFT_bot_secret_2026";
+// Твой токен для проверки
+const BOT_TOKEN = "8255755052:AAFjHxgUKDccQVi33kWGuUXkARcR85CxXDQ";
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
+    if (req.method === 'OPTIONS') return res.status(200).end();
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-    const { telegram_id, bot_secret } = req.body;
+    const { telegram_id, bot_token } = req.body;
     
-    // КРИТИЧЕСКИ ВАЖНО: проверяем, что запрос от настоящего бота
-    if (!bot_secret || bot_secret !== BOT_SECRET) {
-        console.log(`❌ Попытка несанкционированного доступа к генерации ключей`);
-        return res.status(403).json({ 
-            error: 'Access denied. Only @FraZzerNFTbot can generate keys.',
-            bot: '@FraZzerNFTbot' 
-        });
+    // Проверяем что запрос от настоящего бота
+    if (bot_token !== BOT_TOKEN) {
+        return res.status(403).json({ error: 'Unauthorized' });
     }
     
-    if (!telegram_id) {
-        return res.status(400).json({ error: 'telegram_id required' });
-    }
+    if (!telegram_id) return res.status(400).json({ error: 'telegram_id required' });
 
-    // Проверяем, есть ли уже ключ у пользователя
+    // Проверяем есть ли уже ключ
     const existingKey = userKeys.get(telegram_id);
     if (existingKey) {
         const keyData = keys.get(existingKey);
         if (keyData && !keyData.used) {
-            // Возвращаем существующий ключ
-            return res.status(200).json({ 
-                key: existingKey,
-                message: 'У вас уже есть активный ключ'
-            });
+            return res.status(200).json({ key: existingKey });
         }
     }
 
-    // Генерируем новый ключ (16 символов)
+    // Генерируем новый ключ
     const key = Math.random().toString(36).substring(2, 10) + 
                 Math.random().toString(36).substring(2, 10);
     
-    const keyData = {
+    keys.set(key, {
         telegramId: telegram_id,
         createdAt: Date.now(),
-        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 дней
-        used: false,
-        deviceId: null
-    };
-    
-    // Сохраняем в хранилище сайта
-    keys.set(key, keyData);
+        used: false
+    });
     userKeys.set(telegram_id, key);
     
-    console.log(`✅ Ключ ${key} создан для Telegram ID: ${telegram_id} через @FraZzerNFTbot`);
-    
-    res.status(200).json({ 
-        key: key,
-        message: 'Ключ успешно создан'
-    });
-        }
+    res.status(200).json({ key });
+}
