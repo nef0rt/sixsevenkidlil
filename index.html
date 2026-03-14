@@ -1,382 +1,102 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zenin.cc</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', 'Courier New', monospace;
-        }
-
-        body {
-            background: #000;
-            color: #fff;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #app {
-            width: 100%;
-            max-width: 500px;
-            padding: 20px;
-        }
-
-        .screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 80vh;
-            width: 100%;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .welcome-title {
-            font-size: 48px;
-            color: #ff3333;
-            text-shadow: 0 0 20px rgba(255, 51, 51, 0.5);
-            margin: 100px 0 50px;
-            font-weight: 900;
-            letter-spacing: 2px;
-        }
-
-        .welcome-btn, .key-btn, .back-btn, .main-btn {
-            background: #222;
-            color: white;
-            border: 2px solid #ff3333;
-            font-size: 24px;
-            font-weight: bold;
-            padding: 15px 50px;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: 0.3s;
-            text-decoration: none;
-            display: inline-block;
-            margin: 10px;
-        }
-
-        .welcome-btn:hover, .key-btn:hover, .back-btn:hover, .main-btn:hover {
-            background: #ff3333;
-            transform: scale(1.05);
-        }
-
-        .key-title {
-            font-size: 42px;
-            font-weight: 900;
-            background: linear-gradient(45deg, #fff, #ff3333);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin: 50px 0;
-            font-family: 'Impact', fantasy;
-        }
-
-        .key-input {
-            width: 100%;
-            max-width: 300px;
-            padding: 15px;
-            background: #111;
-            border: 2px solid #333;
-            border-radius: 10px;
-            color: white;
-            font-size: 16px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .key-input:focus {
-            outline: none;
-            border-color: #ff3333;
-        }
-
-        .key-error {
-            color: #ff3333;
-            font-size: 14px;
-            margin: 10px 0;
-            min-height: 20px;
-        }
-
-        .key-success {
-            color: #00ff00;
-            font-size: 14px;
-            margin: 10px 0;
-        }
-
-        .main-title {
-            font-size: 56px;
-            font-weight: 900;
-            margin: 50px 0;
-        }
-
-        .main-title span {
-            color: #ff3333;
-        }
-
-        .main-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            width: 100%;
-            max-width: 300px;
-            margin-top: 50px;
-        }
-
-        .install-title {
-            font-size: 36px;
-            color: #ff3333;
-            margin: 50px 0 20px;
-            text-align: center;
-        }
-
-        .install-note {
-            color: #888;
-            font-size: 14px;
-            margin-bottom: 50px;
-        }
-
-        .install-progress-container {
-            width: 100%;
-            max-width: 300px;
-            margin: 30px 0;
-        }
-
-        .install-progress-bar {
-            width: 100%;
-            height: 30px;
-            background: #222;
-            border: 2px solid #333;
-            border-radius: 15px;
-            overflow: hidden;
-        }
-
-        .install-progress-fill {
-            height: 100%;
-            background: #ff3333;
-            transition: width 0.3s;
-            border-radius: 15px;
-        }
-
-        .install-progress-text {
-            text-align: center;
-            margin-top: 10px;
-            color: #ff3333;
-            font-weight: bold;
-        }
-
-        .install-time {
-            color: #888;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-
-        .success-icon {
-            width: 100px;
-            height: 100px;
-            margin: 100px 0 30px;
-            background: #00ff00;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 60px;
-            color: black;
-            font-weight: bold;
-            box-shadow: 0 0 30px #00ff00;
-        }
-
-        .success-message {
-            font-size: 24px;
-            color: #00ff00;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .success-note {
-            color: #888;
-            font-size: 14px;
-            text-align: center;
-            margin-bottom: 50px;
-        }
-
-        .logs-title {
-            font-size: 36px;
-            color: #ff3333;
-            margin: 50px 0 20px;
-        }
-
-        .logs-subtitle {
-            font-size: 18px;
-            color: #fff;
-            margin-bottom: 30px;
-        }
-
-        .logs-list {
-            text-align: left;
-            margin: 30px 0;
-            padding: 20px;
-            background: #111;
-            border: 1px solid #333;
-            border-radius: 10px;
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .logs-list p {
-            margin: 10px 0;
-            color: #888;
-        }
-
-        .logs-list .add {
-            color: #00ff00;
-        }
-
-        .logs-list .remove {
-            color: #ff3333;
-        }
-
-        .cooldown-notification {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            background: #ff3333;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            animation: slideUp 0.3s;
-            z-index: 1000;
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(100px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
+        body { background: black; color: white; font-family: monospace; margin: 0; padding: 20px; }
+        .screen { display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .hidden { display: none; }
+        h1 { font-size: 48px; color: #ff3333; }
+        h2 { font-size: 36px; color: #ff3333; }
+        input { padding: 15px; margin: 20px; width: 300px; background: #222; border: 2px solid #ff3333; color: white; text-align: center; }
+        button { padding: 15px 40px; background: #222; border: 2px solid #ff3333; color: white; font-size: 20px; cursor: pointer; margin: 10px; }
+        button:hover { background: #ff3333; }
+        .error { color: #ff3333; margin: 10px; }
+        .success { color: #00ff00; }
+        .logs { text-align: left; background: #111; padding: 20px; margin: 20px; }
+        .add { color: #00ff00; }
+        .remove { color: #ff3333; }
     </style>
 </head>
 <body>
-
-    <!DOCTYPE html>
-<html lang="ru">
-<head>
     <div id="app">
-        <!-- Welcome Screen -->
+        <!-- Приветствие -->
         <div id="welcomeScreen" class="screen">
-            <h1 class="welcome-title">Добро пожаловать, хацкер</h1>
-            <button class="welcome-btn" onclick="showScreen('keyScreen')">Продолжить</button>
+            <h1>Добро пожаловать, хацкер</h1>
+            <button onclick="showScreen('keyScreen')">Продолжить</button>
         </div>
 
-        <!-- Key Screen -->
+        <!-- Ключ -->
         <div id="keyScreen" class="screen hidden">
-            <h2 class="key-title">Ключ система</h2>
-            <input type="text" id="keyInput" class="key-input" placeholder="ZENIN-XXXX-XXXX-XXXX">
-            <div id="keyError" class="key-error"></div>
-            <div id="keySuccess" class="key-success"></div>
-            <button class="key-btn" onclick="submitKey()">Продолжить</button>
-            <button class="back-btn" onclick="showScreen('welcomeScreen')">Назад</button>
+            <h2>Ключ система</h2>
+            <input type="text" id="keyInput" placeholder="ZENIN-XXXX-XXXX-XXXX">
+            <div id="keyError" class="error"></div>
+            <button onclick="submitKey()">Продолжить</button>
+            <button onclick="showScreen('welcomeScreen')">Назад</button>
         </div>
 
-        <!-- Main Menu -->
+        <!-- Главное меню -->
         <div id="mainScreen" class="screen hidden">
-            <h1 class="main-title">Zenin<span>.cc</span></h1>
-            <div class="main-buttons">
-                <button class="main-btn" onclick="startGame()">Start Game</button>
-                <button class="main-btn" onclick="showScreen('updateScreen')">Update Logs</button>
-            </div>
+            <h1>Zenin<span style="color:#ff3333">.cc</span></h1>
+            <button onclick="alert('Start Game')">Start Game</button>
+            <button onclick="showScreen('updateScreen')">Update Logs</button>
         </div>
 
-        <!-- Update Logs Screen -->
+        <!-- Обновления -->
         <div id="updateScreen" class="screen hidden">
-            <h2 class="logs-title">Beta Test 1.0.0</h2>
-            <div class="logs-subtitle">Что добавили/изменили?</div>
-            <div class="logs-list">
+            <h2>Beta Test 1.0.0</h2>
+            <div class="logs">
                 <p class="add">+ меню</p>
-                <p class="add">+ установка модулей</p>
-                <p class="add">+ чит</p>
                 <p class="add">+ ключ система</p>
+                <p class="add">+ чит</p>
                 <p class="remove">- баги</p>
             </div>
-            <button class="back-btn" onclick="showScreen('mainScreen')">Back to menu</button>
+            <button onclick="showScreen('mainScreen')">Назад</button>
         </div>
 
-        <!-- Success Screen (заглушка) -->
+        <!-- Успех -->
         <div id="successScreen" class="screen hidden">
-            <div class="success-icon">✓</div>
-            <div class="success-message">Ключ активирован!</div>
-            <button class="back-btn" onclick="showScreen('mainScreen')">OK</button>
+            <div style="font-size:72px; color:#00ff00; margin:50px">✓</div>
+            <h2 class="success">Успешно!</h2>
+            <button onclick="showScreen('mainScreen')">OK</button>
         </div>
     </div>
 
     <script>
-        let telegramId = localStorage.getItem('telegram_id') || 'user_' + Math.random().toString(36).substring(2);
-        let deviceId = localStorage.getItem('device_id') || 'device_' + Math.random().toString(36).substring(2);
-        
-        localStorage.setItem('telegram_id', telegramId);
-        localStorage.setItem('device_id', deviceId);
-
+        let telegramId = 'user_' + Math.random().toString(36).substring(2);
         const API_URL = '/api';
 
-        function showScreen(screenId) {
+        function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-            document.getElementById(screenId).classList.remove('hidden');
+            document.getElementById(id).classList.remove('hidden');
         }
 
-        // При загрузке проверяем, был ли уже активирован ключ
-        (async function() {
-            const keyActivated = localStorage.getItem('key_activated');
-            if (keyActivated) {
-                showScreen('mainScreen');
-            } else {
-                showScreen('welcomeScreen');
-            }
-        })();
-
         async function submitKey() {
-            const key = document.getElementById('keyInput').value.trim().replace(/ZENIN-/g, '').replace(/-/g, '');
+            const key = document.getElementById('keyInput').value.replace(/ZENIN-|-/g, '');
             const errorDiv = document.getElementById('keyError');
             
-            if (!key) return;
-
             try {
                 const res = await fetch(`${API_URL}/verify-key`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        key, 
-                        telegram_id: telegramId,
-                        device_id: deviceId 
-                    })
+                    body: JSON.stringify({ key, telegram_id: telegramId })
                 });
-                
                 const data = await res.json();
                 
                 if (data.valid) {
-                    localStorage.setItem('key_activated', 'true');
                     showScreen('successScreen');
                     setTimeout(() => showScreen('mainScreen'), 1500);
                 } else {
-                    errorDiv.textContent = data.message || 'Неверный ключ! Получите в боте @FraZzerNFTbot';
+                    errorDiv.innerText = data.message || 'Неверный ключ';
                 }
-            } catch (err) {
-                errorDiv.textContent = 'Ошибка соединения';
+            } catch {
+                errorDiv.innerText = 'Ошибка соединения';
             }
         }
 
-        function startGame() {
-            // Заглушка для игры
-            alert('Игра запущена!');
-        }
-
-        window.showScreen = showScreen;
-        window.submitKey = submitKey;
-        window.startGame = startGame;
+        showScreen('welcomeScreen');
     </script>
 </body>
 </html>
