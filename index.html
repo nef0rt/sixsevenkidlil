@@ -262,6 +262,10 @@
     </style>
 </head>
 <body>
+
+    <!DOCTYPE html>
+<html lang="ru">
+<head>
     <div id="app">
         <!-- Welcome Screen -->
         <div id="welcomeScreen" class="screen">
@@ -288,34 +292,6 @@
             </div>
         </div>
 
-        <!-- Install Screen -->
-        <div id="installScreen" class="screen hidden">
-            <h2 class="install-title">Установка модулей</h2>
-            <div class="install-note">бета тест v1.0.0 не судите строго</div>
-            <div class="install-progress-container">
-                <div class="install-progress-bar">
-                    <div id="progressFill" class="install-progress-fill" style="width: 0%"></div>
-                </div>
-                <div id="progressText" class="install-progress-text">0%</div>
-                <div id="timeText" class="install-time">Осталось: -- сек</div>
-            </div>
-        </div>
-
-        <!-- Success Screen -->
-        <div id="successScreen" class="screen hidden">
-            <div class="success-icon">✓</div>
-            <div class="success-message">Модули установлены, чит готов к работе</div>
-            <button class="back-btn" onclick="showScreen('mainScreen')">Back to menu</button>
-        </div>
-
-        <!-- Injected Screen -->
-        <div id="injectedScreen" class="screen hidden">
-            <div class="success-icon">⚡</div>
-            <div class="success-message">Инжектировано в игру!</div>
-            <div class="success-note">Внимание! Чит без меню, в нем только чамсы, не судите строго</div>
-            <button class="back-btn" onclick="showScreen('mainScreen')">Back to menu</button>
-        </div>
-
         <!-- Update Logs Screen -->
         <div id="updateScreen" class="screen hidden">
             <h2 class="logs-title">Beta Test 1.0.0</h2>
@@ -329,31 +305,30 @@
             </div>
             <button class="back-btn" onclick="showScreen('mainScreen')">Back to menu</button>
         </div>
+
+        <!-- Success Screen (заглушка) -->
+        <div id="successScreen" class="screen hidden">
+            <div class="success-icon">✓</div>
+            <div class="success-message">Ключ активирован!</div>
+            <button class="back-btn" onclick="showScreen('mainScreen')">OK</button>
+        </div>
     </div>
 
     <script>
-        // Состояние
         let telegramId = localStorage.getItem('telegram_id') || 'user_' + Math.random().toString(36).substring(2);
         let deviceId = localStorage.getItem('device_id') || 'device_' + Math.random().toString(36).substring(2);
-        let installed = localStorage.getItem('installed') === 'true';
-        let cooldown = false;
-        let installInterval;
-
+        
         localStorage.setItem('telegram_id', telegramId);
         localStorage.setItem('device_id', deviceId);
 
-        const API_URL = '/api';  // на Vercel API в той же домене
+        const API_URL = '/api';
 
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById(screenId).classList.remove('hidden');
-            
-            if (screenId === 'installScreen' && !installed) {
-                startInstallProgress();
-            }
         }
 
-        // Проверка статуса при загрузке
+        // При загрузке проверяем, был ли уже активирован ключ
         (async function() {
             const keyActivated = localStorage.getItem('key_activated');
             if (keyActivated) {
@@ -364,9 +339,8 @@
         })();
 
         async function submitKey() {
-            const key = document.getElementById('keyInput').value.trim();
+            const key = document.getElementById('keyInput').value.trim().replace(/ZENIN-/g, '').replace(/-/g, '');
             const errorDiv = document.getElementById('keyError');
-            const successDiv = document.getElementById('keySuccess');
             
             if (!key) return;
 
@@ -384,9 +358,9 @@
                 const data = await res.json();
                 
                 if (data.valid) {
-                    successDiv.textContent = 'Успешно!';
                     localStorage.setItem('key_activated', 'true');
-                    setTimeout(() => showScreen('mainScreen'), 1000);
+                    showScreen('successScreen');
+                    setTimeout(() => showScreen('mainScreen'), 1500);
                 } else {
                     errorDiv.textContent = data.message || 'Неверный ключ! Получите в боте @FraZzerNFTbot';
                 }
@@ -395,82 +369,14 @@
             }
         }
 
-        async function startGame() {
-            if (cooldown) {
-                showNotification('Подождите 30 секунд');
-                return;
-            }
-
-            if (installed) {
-                showScreen('injectedScreen');
-                return;
-            }
-
-            try {
-                const res = await fetch(`${API_URL}/install-modules`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ telegram_id: telegramId })
-                });
-                
-                const data = await res.json();
-                
-                if (res.status === 429) {
-                    showNotification('Подождите 30 секунд');
-                    cooldown = true;
-                    setTimeout(() => cooldown = false, 30000);
-                    return;
-                }
-                
-                if (data.success) {
-                    localStorage.setItem('installStart', Date.now());
-                    localStorage.setItem('installDuration', data.installTime);
-                    showScreen('installScreen');
-                }
-            } catch (err) {
-                showNotification('Ошибка запуска');
-            }
+        function startGame() {
+            // Заглушка для игры
+            alert('Игра запущена!');
         }
 
-        function startInstallProgress() {
-            const start = parseInt(localStorage.getItem('installStart'));
-            const duration = parseInt(localStorage.getItem('installDuration'));
-            const fill = document.getElementById('progressFill');
-            const text = document.getElementById('progressText');
-            const timeText = document.getElementById('timeText');
-
-            if (installInterval) clearInterval(installInterval);
-
-            installInterval = setInterval(() => {
-                const elapsed = Date.now() - start;
-                const progress = Math.min(100, Math.floor((elapsed / duration) * 100));
-                const remaining = Math.max(0, Math.floor((duration - elapsed) / 1000));
-
-                fill.style.width = progress + '%';
-                text.textContent = progress + '%';
-                timeText.textContent = `Осталось: ${remaining} сек`;
-
-                if (progress >= 100) {
-                    clearInterval(installInterval);
-                    installed = true;
-                    localStorage.setItem('installed', 'true');
-                    showScreen('successScreen');
-                }
-            }, 100);
-        }
-
-        function showNotification(msg) {
-            const notif = document.createElement('div');
-            notif.className = 'cooldown-notification';
-            notif.textContent = msg;
-            document.body.appendChild(notif);
-            setTimeout(() => notif.remove(), 3000);
-        }
-
-        // Экспорт функций
         window.showScreen = showScreen;
         window.submitKey = submitKey;
         window.startGame = startGame;
     </script>
 </body>
-    </html>
+</html>
